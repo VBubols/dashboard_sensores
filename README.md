@@ -1,6 +1,6 @@
 # Dashboard de Sensores IoT (MQTT + Django + Next.js)
 
-Solução do desafio técnico: ingestão, persistência e visualização de dados IoT recebidos via MQTT.
+Pipeline completo de ingestão, persistência e visualização de dados IoT recebidos via MQTT.
 
 O projeto consome uplinks de dispositivos LoRaWAN (formato ChirpStack v4) publicados num broker
 MQTT, persiste as leituras num banco PostgreSQL, expõe os dados via uma API em Django REST
@@ -13,7 +13,19 @@ Framework e os visualiza num dashboard em Next.js 15 com React Query.
 - **Banco**: PostgreSQL
 - **Front-end**: Next.js 15 + React Query
 - **Infra local**: Docker Compose
-- **Fonte de dados** (já fornecida): broker Mosquitto + gerador de uplinks simulados
+- **Simulador de dados**: broker Mosquitto + gerador de uplinks LoRaWAN simulados
+
+## Arquitetura
+
+O fluxo de uma mensagem, de ponta a ponta:
+
+```
+dispositivo simulado → broker MQTT → consumidor Django → PostgreSQL → API DRF → dashboard Next.js
+```
+
+O gerador publica uplinks no broker; o consumidor MQTT (um management command rodando como
+serviço próprio) assina os tópicos, interpreta o payload e persiste via ORM; a API expõe os dados
+e o dashboard consome a API com polling via React Query.
 
 ## Como rodar
 
@@ -62,8 +74,8 @@ docker compose exec backend python manage.py createsuperuser
 ```
 .
 ├── docker-compose.yml     # orquestra todos os serviços
-├── mosquitto/             # config do broker (fonte de dados, não alterada)
-├── generator/             # simulador de uplinks (fonte de dados, não alterada)
+├── mosquitto/             # config do broker MQTT
+├── generator/             # simulador de uplinks LoRaWAN
 ├── backend/               # Django: API + consumidor MQTT
 │   ├── core/              # settings, urls
 │   └── telemetry/         # models, serializers, views, consumidor MQTT
